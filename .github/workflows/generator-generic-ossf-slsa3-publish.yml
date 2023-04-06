@@ -43,7 +43,7 @@ jobs:
       - name: Build with Gradle
         uses: gradle/gradle-build-action@a8f0f0d523dc65b8b1c498d552cb13949dfbc8c9
         with:
-          arguments: bootWar -Pversion="${GITHUB_REF_NAME#v}"
+          arguments: bootWar -Pversion=${{ github.ref_name#v }}
 
       # ========================================================
       #
