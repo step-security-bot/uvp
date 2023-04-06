@@ -11,10 +11,14 @@
 # For more information about SLSA and how it improves the supply-chain, visit slsa.dev.
 
 name: SLSA generic generator
+# on:
+#   workflow_dispatch:
+#   release:
+#     types: [created]
 on:
-  workflow_dispatch:
-  release:
-    types: [created]
+  push:
+    tags:
+      - "v*.*.*"
 
 jobs:
   build:
@@ -23,8 +27,6 @@ jobs:
       hashes: ${{ steps.hash.outputs.hashes }}
 
     steps:
-      - uses: actions/checkout@v3
-
       # ========================================================
       #
       # Step 1: Build your artifacts.
@@ -45,7 +47,7 @@ jobs:
       - name: Build with Gradle
         uses: gradle/gradle-build-action@a8f0f0d523dc65b8b1c498d552cb13949dfbc8c9
         with:
-          arguments: bootWar
+          arguments: bootWar -Pversion=${{ github.ref_name }}
 
       # ========================================================
       #
@@ -62,24 +64,40 @@ jobs:
 
           # List the artifacts the provenance will refer to.
           cd build/libs
-          files=$(ls *.war)
+          files=$(ls uvp-${{ github.ref_name }}.war)
           # Generate the subjects (base64 encoded).
           echo "hashes=$(sha256sum $files | base64 -w0)" >> "${GITHUB_OUTPUT}"
       
       - name: Upload artifact
         uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # tag=v3.1.0
         with:
-          name: uvp.war
-          path: build/libs/*.war
+          path: build/libs/uvp-${{ github.ref_name }}.war
           if-no-files-found: error
 
-#   provenance:
-#     needs: [build]
-#     permissions:
-#       actions: read   # To read the workflow path.
-#       id-token: write # To sign the provenance.
-#       contents: write # To add assets to a release.
-#     uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v1.4.0
-#     with:
-#       base64-subjects: "${{ needs.build.outputs.hashes }}"
-#       upload-assets: true # Optional: Upload to a new release
+  provenance:
+    needs: [build]
+    permissions:
+      actions: read   # To read the workflow path.
+      id-token: write # To sign the provenance.
+      contents: write # To add assets to a release.
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v1.4.0
+    with:
+      base64-subjects: "${{ needs.build.outputs.hashes }}"
+      upload-assets: true # Optional: Upload to a new release
+  
+  # This step uploads our artifacts to the tagged GitHub release.
+  release:
+    needs: [build, provenance]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741 # tag=v2.1.0
+        with:
+          name: uvp-${{ github.ref_name }}.war
+
+      - name: Upload assets
+        uses: softprops/action-gh-release@1e07f4398721186383de40550babbdf2b84acfc5 # v0.1.14
+        with:
+          files: |
+            uvp-${{ github.ref_name }}.war
