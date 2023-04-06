@@ -21,13 +21,15 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       hashes: ${{ steps.hash.outputs.hashes }}
+      version: ${{ steps.version.outputs.version }}
 
     steps:
       # Store the version, stripping any v-prefix
       - name: Write release version
+        id: version
         run: |
-          VERSION=${GITHUB_REF_NAME#v}
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "VERSION=${GITHUB_REF_NAME#v}" >> "${GITHUB_ENV}"
+          echo "version=${GITHUB_REF_NAME#v}" >> "${GITHUB_OUTPUT}"
         
       # ========================================================
       #
@@ -66,8 +68,6 @@ jobs:
 
           # List the artifacts the provenance will refer to.
           cd build/libs
-          allfiles=$(ls *.war)
-          echo "$allfiles"
           files=$(ls uvp-${{ env.VERSION }}.war)
           # Generate the subjects (base64 encoded).
           echo "hashes=$(sha256sum $files | base64 -w0)" >> "${GITHUB_OUTPUT}"
@@ -101,10 +101,10 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741 # tag=v2.1.0
         with:
-          name: uvp-${{ env.VERSION }}.war
+          name: uvp-${{ needs.build.outputs.version }}.war
 
       - name: Upload assets
         uses: softprops/action-gh-release@1e07f4398721186383de40550babbdf2b84acfc5 # v0.1.14
         with:
           files: |
-            uvp-${{ env.VERSION }}.war
+            uvp-${{ needs.build.outputs.version }}.war
