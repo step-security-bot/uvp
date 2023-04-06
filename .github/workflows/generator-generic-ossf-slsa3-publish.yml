@@ -15,6 +15,9 @@ on:
   push:
     tags:
       - "v*.*.*"
+      
+env:
+  VERSION: ${GITHUB_REF_NAME#v}
 
 jobs:
   build:
@@ -43,7 +46,7 @@ jobs:
       - name: Build with Gradle
         uses: gradle/gradle-build-action@a8f0f0d523dc65b8b1c498d552cb13949dfbc8c9
         with:
-          arguments: bootWar -Pversion=${{ github.ref_name#v }}
+          arguments: bootWar -Pversion=${VERSION}
 
       # ========================================================
       #
@@ -62,15 +65,15 @@ jobs:
           cd build/libs
           allfiles=$(ls *.war)
           echo "$allfiles"
-          files=$(ls uvp-${GITHUB_REF_NAME#v}.war)
+          files=$(ls uvp-${VERSION}.war)
           # Generate the subjects (base64 encoded).
           echo "hashes=$(sha256sum $files | base64 -w0)" >> "${GITHUB_OUTPUT}"
       
       - name: Upload artifact
         uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # tag=v3.1.0
         with:
-          name: uvp-${GITHUB_REF_NAME#v}.war
-          path: build/libs/uvp-${GITHUB_REF_NAME#v}.war
+          name: uvp-${VERSION}.war
+          path: build/libs/uvp-${VERSION}.war
           if-no-files-found: error
 
   provenance:
@@ -95,10 +98,10 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741 # tag=v2.1.0
         with:
-          name: uvp-${GITHUB_REF_NAME#v}.war
+          name: uvp-${VERSION}.war
 
       - name: Upload assets
         uses: softprops/action-gh-release@1e07f4398721186383de40550babbdf2b84acfc5 # v0.1.14
         with:
           files: |
-            uvp-${GITHUB_REF_NAME#v}.war
+            uvp-${VERSION}.war
