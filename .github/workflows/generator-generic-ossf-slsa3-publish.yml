@@ -61,6 +61,8 @@ jobs:
           # List the artifacts the provenance will refer to.
           cd build/libs
           files=$(ls uvp-${GITHUB_REF_NAME#v}.war)
+          allfiles=$(ls .*.war)
+          echo "${allfiles}"
           # Generate the subjects (base64 encoded).
           echo "hashes=$(sha256sum $files | base64 -w0)" >> "${GITHUB_OUTPUT}"
       
