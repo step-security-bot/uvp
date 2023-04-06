@@ -69,7 +69,9 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # tag=v3.1.0
         with:
+          name: uvp.war
           path: build/libs/*.war
+          if-no-files-found: error
 
   provenance:
     needs: [build]
