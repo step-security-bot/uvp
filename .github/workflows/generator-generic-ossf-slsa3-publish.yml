@@ -11,10 +11,6 @@
 # For more information about SLSA and how it improves the supply-chain, visit slsa.dev.
 
 name: SLSA generic generator
-# on:
-#   workflow_dispatch:
-#   release:
-#     types: [created]
 on:
   push:
     tags:
@@ -47,7 +43,7 @@ jobs:
       - name: Build with Gradle
         uses: gradle/gradle-build-action@a8f0f0d523dc65b8b1c498d552cb13949dfbc8c9
         with:
-          arguments: bootWar -Pversion=${{ github.ref_name }}
+          arguments: bootWar -Pversion=${GITHUB_REF_NAME#v}
 
       # ========================================================
       #
@@ -64,15 +60,15 @@ jobs:
 
           # List the artifacts the provenance will refer to.
           cd build/libs
-          files=$(ls uvp-${{ github.ref_name }}.war)
+          files=$(ls uvp-${GITHUB_REF_NAME#v}.war)
           # Generate the subjects (base64 encoded).
           echo "hashes=$(sha256sum $files | base64 -w0)" >> "${GITHUB_OUTPUT}"
       
       - name: Upload artifact
         uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # tag=v3.1.0
         with:
-          name: uvp-${{ github.ref_name }}.war
-          path: build/libs/uvp-${{ github.ref_name }}.war
+          name: uvp-${GITHUB_REF_NAME#v}.war
+          path: build/libs/uvp-${GITHUB_REF_NAME#v}.war
           if-no-files-found: error
 
   provenance:
