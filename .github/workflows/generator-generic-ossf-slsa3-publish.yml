@@ -60,9 +60,9 @@ jobs:
 
           # List the artifacts the provenance will refer to.
           cd build/libs
-          files=$(ls uvp-${GITHUB_REF_NAME#v}.war)
           allfiles=$(ls .*.war)
-          echo "${allfiles}"
+          echo "$allfiles"
+          files=$(ls uvp-${GITHUB_REF_NAME#v}.war)
           # Generate the subjects (base64 encoded).
           echo "hashes=$(sha256sum $files | base64 -w0)" >> "${GITHUB_OUTPUT}"
       
@@ -95,10 +95,10 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741 # tag=v2.1.0
         with:
-          name: uvp-${{ github.ref_name }}.war
+          name: uvp-${GITHUB_REF_NAME#v}.war
 
       - name: Upload assets
         uses: softprops/action-gh-release@1e07f4398721186383de40550babbdf2b84acfc5 # v0.1.14
         with:
           files: |
-            uvp-${{ github.ref_name }}.war
+            uvp-${GITHUB_REF_NAME#v}.war
